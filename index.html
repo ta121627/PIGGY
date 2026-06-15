@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>PIGGY</title>
+<link rel="manifest" href="manifest.json">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --blue: #3478F6;
+  --red: #FF453A;
+  --purple: #BF5AF2;
+  --green: #30D158;
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --text: #1C1C1E;
+  --text2: #8E8E93;
+  --border: rgba(60,60,67,0.18);
+  --sep: #ECECEE;
+  --tag-bg: #EFEFF4;
+  --tag-text: #636366;
+  --btn-bg: #E5E5EA;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --text: #FFFFFF;
+    --text2: #8E8E93;
+    --border: rgba(255,255,255,0.12);
+    --sep: #2C2C2E;
+    --tag-bg: #2C2C2E;
+    --tag-text: #8E8E93;
+    --btn-bg: #2C2C2E;
+  }
+}
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", sans-serif;
+  background: var(--bg); color: var(--text);
+  -webkit-font-smoothing: antialiased; overscroll-behavior-y: none;
+}
+body { padding-bottom: calc(64px + var(--safe-bottom)); }
+
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  padding: calc(var(--safe-top) + 8px) 20px 10px;
+  background: rgba(242,242,247,0.82);
+  backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--border);
+}
+@media (prefers-color-scheme: dark) {
+  .nav { background: rgba(0,0,0,0.82); }
+  .tabbar { background: rgba(28,28,30,0.92); }
+}
+.nav-title { font-size: 30px; font-weight: 800; letter-spacing: 1px; }
+.nav-sub { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 600; }
+
+.page { display: none; padding: 16px 16px 0; }
+.page.active { display: block; }
+
+/* Goal block */
+.goal-block { margin-bottom: 20px; }
+.goal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 9px; }
+.goal-name { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+.goal-edit { border: none; background: var(--btn-bg); color: var(--text2); width: 30px; height: 30px; border-radius: 50%; font-size: 17px; cursor: pointer; line-height: 1; }
+.goal-edit:active { opacity: 0.7; }
+
+.hero { background: var(--card); border-radius: 22px; padding: 22px 20px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.hero-amount { font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.hero-target-lbl { font-size: 13px; color: var(--text2); font-weight: 600; margin-top: 6px; }
+.prog-wrap { display: flex; align-items: center; gap: 10px; margin: 18px 0 8px; }
+.prog-bar { flex: 1; height: 10px; background: var(--sep); border-radius: 100px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--blue) 0%, var(--purple) 100%); width: 0%; transition: width 0.7s cubic-bezier(0.34,1.2,0.64,1); }
+.prog-pct { font-size: 17px; font-weight: 800; color: var(--blue); min-width: 48px; text-align: right; letter-spacing: -0.5px; }
+.hero-done { margin-top: 12px; font-size: 15px; font-weight: 700; color: var(--green); background: rgba(48,209,88,0.12); padding: 7px 16px; border-radius: 100px; display: inline-block; }
+.bal-label { font-size: 14px; color: var(--text2); font-weight: 600; margin-bottom: 8px; }
+
+/* Summary card */
+.summary-card { background: var(--card); border-radius: 22px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 20px; }
+.sum-label { font-size: 13px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
+.sum-amount { font-size: 38px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+.sum-detail { font-size: 13px; color: var(--text2); font-weight: 600; margin-top: 8px; }
+
+.quick { display: flex; gap: 12px; margin-top: 12px; }
+.qbtn { flex: 1; border: none; border-radius: 16px; padding: 15px 0; font-size: 16px; font-weight: 700; color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.08s, opacity 0.15s; }
+.qbtn:active { transform: scale(0.97); opacity: 0.9; }
+.qbtn.in { background: var(--blue); }
+.qbtn.out { background: var(--red); }
+.qbtn .sym { font-size: 20px; line-height: 1; }
+
+.stats { margin-top: 12px; background: var(--card); border-radius: 18px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.stat-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 0.5px solid var(--sep); }
+.stat-row:last-child { border-bottom: none; }
+.stat-key { font-size: 15px; color: var(--text); display: flex; align-items: center; gap: 9px; }
+.stat-key .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.stat-val { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; text-align: right; }
+.stat-val.muted { color: var(--text2); font-weight: 600; }
+.stat-val.warn { color: var(--red); }
+
+.add-goal { width: 100%; border: 1.5px dashed var(--sep); background: transparent; border-radius: 18px; padding: 17px 0; font-size: 16px; font-weight: 700; color: var(--text2); cursor: pointer; font-family: inherit; margin-bottom: 8px; transition: background 0.12s; }
+.add-goal:active { background: var(--sep); }
+
+.empty-goal { background: var(--card); border-radius: 18px; padding: 44px 20px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 14px; }
+.empty-icon { font-size: 52px; margin-bottom: 14px; }
+.empty-goal p { font-size: 15px; color: var(--text2); margin-bottom: 22px; line-height: 1.6; }
+
+/* History */
+.hist-search-wrap { position: relative; margin-bottom: 12px; }
+.hist-search { width: 100%; border: none; outline: none; background: var(--card); border-radius: 12px; padding: 11px 14px 11px 38px; font-size: 15px; color: var(--text); font-family: inherit; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.hist-search::placeholder { color: var(--text2); }
+.hist-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text2); font-size: 15px; pointer-events: none; }
+.hist-month-label { font-size: 15px; font-weight: 700; margin: 22px 4px 10px; display: flex; justify-content: space-between; align-items: baseline; }
+.hist-month-label:first-child { margin-top: 4px; }
+.month-net { font-size: 13px; font-weight: 700; }
+.month-net.plus { color: var(--blue); }
+.month-net.minus { color: var(--red); }
+.hist-list { background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.hist-item { display: flex; align-items: center; gap: 13px; padding: 13px 16px; border-bottom: 0.5px solid var(--sep); cursor: pointer; transition: background 0.12s; }
+.hist-item:last-child { border-bottom: none; }
+.hist-item:active { background: var(--tag-bg); }
+.hist-icon { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 800; color: #FFFFFF; }
+.hist-icon.in { background: var(--blue); }
+.hist-icon.out { background: var(--red); }
+.hist-main { flex: 1; min-width: 0; }
+.hist-memo { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-meta { font-size: 13px; color: var(--text2); margin-top: 1px; display: flex; align-items: center; gap: 6px; }
+.hist-tag { background: var(--tag-bg); color: var(--tag-text); border-radius: 6px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+.hist-amt { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
+.hist-amt.in { color: var(--blue); }
+.hist-amt.out { color: var(--red); }
+.hist-empty { text-align: center; color: var(--text2); font-size: 15px; padding: 48px 20px; line-height: 1.6; }
+
+/* Settings */
+.sec-label { font-size: 13px; color: var(--text2); font-weight: 600; margin: 24px 4px 8px; }
+.sec-label:first-child { margin-top: 6px; }
+.card-list { background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.field { display: flex; align-items: center; padding: 13px 16px; border-bottom: 0.5px solid var(--sep); }
+.field:last-child { border-bottom: none; }
+.field label { font-size: 16px; flex-shrink: 0; width: 116px; }
+.field input { flex: 1; border: none; outline: none; font-size: 16px; text-align: right; background: transparent; color: var(--text); font-family: inherit; min-width: 0; }
+.field .unit { color: var(--text2); font-size: 15px; margin-left: 6px; }
+.field input::placeholder { color: #C7C7CC; }
+.row-btn { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 0.5px solid var(--sep); cursor: pointer; font-size: 16px; transition: background 0.12s; }
+.row-btn:last-child { border-bottom: none; }
+.row-btn:active { background: var(--tag-bg); }
+.row-btn.danger { color: var(--red); }
+.row-btn .chev { color: #C7C7CC; font-size: 17px; }
+.note { text-align: center; color: #C7C7CC; font-size: 12px; margin-top: 20px; line-height: 1.5; }
+
+/* Tabbar */
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; padding-bottom: var(--safe-bottom); background: rgba(249,249,249,0.92); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-top: 0.5px solid var(--border); }
+.tab { flex: 1; border: none; background: transparent; cursor: pointer; padding: 8px 0 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text2); font-family: inherit; }
+.tab.active { color: var(--blue); }
+.tab svg { width: 25px; height: 25px; }
+.tab span { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
+
+/* Modal */
+.modal-back { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.modal-back.show { opacity: 1; pointer-events: auto; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 101; background: var(--bg); border-radius: 16px 16px 0 0; padding: 8px 16px calc(16px + var(--safe-bottom)); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); max-height: 94vh; overflow-y: auto; }
+.sheet.show { transform: translateY(0); }
+.grab { width: 38px; height: 5px; border-radius: 3px; background: #C7C7CC; margin: 6px auto 14px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sheet-title { font-size: 18px; font-weight: 700; }
+.sheet-x { border: none; background: var(--btn-bg); color: var(--text2); width: 30px; height: 30px; border-radius: 50%; font-size: 17px; cursor: pointer; }
+.amt-display { background: var(--card); border-radius: 14px; padding: 22px 16px; text-align: center; margin-bottom: 12px; }
+.amt-display .yen { font-size: 38px; font-weight: 800; letter-spacing: -1px; }
+.amt-display .yen.placeholder { color: #C7C7CC; }
+.amt-display .cap { font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 600; }
+.sheet-field { background: var(--card); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+.sheet-field .field input { text-align: left; }
+.sheet-field .field input[type="date"] { text-align: right; }
+.sheet-field .field input[type="tel"] { text-align: right; }
+.seg-field { padding: 12px 16px; }
+.seg-field .seg-lbl { font-size: 16px; margin-bottom: 10px; }
+.seg { display: flex; background: #E9E9EB; border-radius: 9px; padding: 2px; }
+@media (prefers-color-scheme: dark) { .seg { background: #3A3A3C; } }
+.seg button { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text); padding: 8px 0; border-radius: 7px; cursor: pointer; transition: background 0.15s; }
+.seg button.on { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.key { background: var(--card); border: none; border-radius: 14px; padding: 16px 0; font-size: 26px; font-weight: 600; font-family: inherit; color: var(--text); cursor: pointer; transition: background 0.08s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.key:active { background: var(--btn-bg); }
+.key.del { font-size: 22px; }
+.sheet-save { width: 100%; border: none; border-radius: 14px; padding: 16px 0; font-size: 17px; font-weight: 700; color: #FFFFFF; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+.sheet-save:active { opacity: 0.85; }
+.sheet-save:disabled { background: #C7C7CC !important; }
+.sheet-save.in { background: var(--blue); }
+.sheet-save.out { background: var(--red); }
+.sheet-save.neutral { background: var(--blue); }
+.sheet-row { display: flex; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid var(--sep); cursor: pointer; font-size: 16px; justify-content: space-between; }
+.sheet-row:last-child { border-bottom: none; }
+.sheet-row.danger { color: var(--red); justify-content: center; }
+.sheet-row .chev { color: #C7C7CC; }
+
+/* Action sheet */
+.action-sheet { position: fixed; left: 8px; right: 8px; bottom: calc(8px + var(--safe-bottom)); z-index: 101; transform: translateY(140%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
+.action-sheet.show { transform: translateY(0); }
+.action-group { background: rgba(255,255,255,0.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 14px; overflow: hidden; margin-bottom: 8px; }
+@media (prefers-color-scheme: dark) {
+  .action-group { background: rgba(44,44,46,0.98); }
+  .action-cancel { background: #1C1C1E !important; }
+}
+.action-btn { width: 100%; border: none; background: transparent; padding: 17px 0; font-size: 18px; font-family: inherit; cursor: pointer; border-bottom: 0.5px solid var(--border); color: var(--blue); }
+.action-btn:last-child { border-bottom: none; }
+.action-btn.danger { color: var(--red); }
+.action-btn.title { color: var(--text2); font-size: 13px; font-weight: 600; padding: 12px; cursor: default; text-align: left; }
+.action-cancel { width: 100%; border: none; background: #FFFFFF; padding: 17px 0; font-size: 18px; font-weight: 700; font-family: inherit; border-radius: 14px; color: var(--blue); cursor: pointer; }
+
+/* Coins */
+#rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 200; }
+.coin {
+  position: absolute; top: -64px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #FFEFAE 0%, #FFD75E 40%, #F2BB2E 70%, #D99A18 100%);
+  border: 2px solid #E7B22B;
+  box-shadow: 0 3px 7px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  color: #8A5A00; font-weight: 800; will-change: transform, opacity;
+  animation-name: coinfall; animation-timing-function: cubic-bezier(0.45,0.05,0.55,0.95); animation-fill-mode: forwards;
+}
+@keyframes coinfall {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 0; }
+  8%   { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translate(var(--dx),var(--dist)) rotate(var(--spin)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .coin { animation-duration: 0.01ms !important; opacity: 0 !important; } }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-title">PIGGY</div>
+  <div class="nav-sub" id="navSub">コツコツ貯金</div>
+</div>
+
+<div class="page active" id="page-home"><div id="homeContent"></div></div>
+
+<div class="page" id="page-hist">
+  <div class="hist-search-wrap">
+    <span class="hist-search-icon">🔍</span>
+    <input class="hist-search" id="histSearch" type="search" placeholder="記録を検索...">
+  </div>
+  <div id="histContent"></div>
+</div>
+
+<div class="page" id="page-settings">
+  <div class="sec-label">給料日</div>
+  <div class="card-list">
+    <div class="field"><label>毎月の給料日</label><input id="setSalaryDay" type="tel" inputmode="numeric" placeholder="25"><span class="unit">日</span></div>
+  </div>
+  <div class="note" style="text-align:left;margin:8px 6px 0;">「回数」表示の項目で、目標日までに給料を受け取る回数の計算に使われます。</div>
+  <div class="sec-label">データ</div>
+  <div class="card-list">
+    <div class="row-btn" id="btnExport"><span>データをエクスポート</span><span class="chev">›</span></div>
+    <div class="row-btn danger" id="btnReset"><span>すべてリセット</span><span class="chev">›</span></div>
+  </div>
+  <div class="note">データはこの端末内にのみ保存されます</div>
+</div>
+
+<div class="tabbar">
+  <button class="tab active" data-page="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg>
+    <span>ホーム</span>
+  </button>
+  <button class="tab" data-page="hist">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>
+    <span>履歴</span>
+  </button>
+  <button class="tab" data-page="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>設定</span>
+  </button>
+</div>
+
+<div class="modal-back" id="modalBack"></div>
+
+<!-- Entry sheet -->
+<div class="sheet" id="entrySheet">
+  <div class="grab"></div>
+  <div class="sheet-head"><div class="sheet-title" id="entryTitle">入金</div><button class="sheet-x" id="entryClose">✕</button></div>
+  <div class="amt-display"><div class="yen placeholder" id="entryAmt">¥0</div><div class="cap" id="entryCap">金額を入力</div></div>
+  <div class="sheet-field">
+    <div class="field"><label>メモ</label><input id="entryMemo" type="text" placeholder="任意" maxlength="30"></div>
+    <div class="field"><label>日付</label><input id="entryDate" type="date"></div>
+  </div>
+  <div class="keypad" id="keypad"></div>
+  <button class="sheet-save in" id="entrySave" disabled>保存する</button>
+</div>
+
+<!-- Goal sheet -->
+<div class="sheet" id="goalSheet">
+  <div class="grab"></div>
+  <div class="sheet-head"><div class="sheet-title" id="goalTitle">項目を追加</div><button class="sheet-x" id="goalClose">✕</button></div>
+  <div class="sheet-field">
+    <div class="field"><label>項目名</label><input id="goalName" type="text" placeholder="例：旅行資金" maxlength="20"></div>
+    <div class="field"><label>目標金額</label><input id="goalTarget" type="tel" inputmode="numeric" placeholder="任意（なくてもOK）"></div>
+    <div class="field"><label>目標の日付</label><input id="goalDate" type="date"></div>
+  </div>
+  <div class="sheet-field">
+    <div class="seg-field">
+      <div class="seg-lbl">目標日までの表示</div>
+      <div class="seg" id="goalSeg">
+        <button data-mode="salary" class="on">給料の回数</button>
+        <button data-mode="days">日数</button>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-field" id="goalExtraRows" style="display:none;">
+    <div class="sheet-row" id="goalAdjust"><span>現在の残高を修正</span><span class="chev">›</span></div>
+  </div>
+  <button class="sheet-save neutral" id="goalSave" style="margin-bottom:10px;" disabled>保存する</button>
+  <div class="sheet-field" id="goalDeleteWrap" style="display:none;">
+    <div class="sheet-row danger" id="goalDelete">この項目を削除</div>
+  </div>
+</div>
+
+<!-- Action sheet -->
+<div class="action-sheet" id="actionSheet">
+  <div class="action-group">
+    <div class="action-btn title" id="actionTitle">操作</div>
+    <button class="action-btn" id="actionEdit">編集する</button>
+    <button class="action-btn danger" id="actionDelete">削除する</button>
+  </div>
+  <button class="action-cancel" id="actionCancel">キャンセル</button>
+</div>
+
+<div id="rain"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "piggy_v1";
+  var OLDKEY = "tansuChokin_v1";
+  var state = load();
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) return normalize(JSON.parse(raw));
+    } catch (e) {}
+    try {
+      var old = localStorage.getItem(OLDKEY);
+      if (old) {
+        var o = JSON.parse(old);
+        return { salaryDay: 25, goals: [{ id: Date.now(), label: o.goalLabel || "貯金", target: o.goalTarget || 0, date: o.goalDate || "", mode: "salary", transactions: Array.isArray(o.transactions) ? o.transactions : [] }] };
+      }
+    } catch (e) {}
+    return { salaryDay: 25, goals: [] };
+  }
+
+  function normalize(p) {
+    return {
+      salaryDay: p.salaryDay || 25,
+      goals: Array.isArray(p.goals) ? p.goals.map(function (g) {
+        return { id: g.id, label: g.label || "貯金", target: g.target || 0, date: g.date || "", mode: g.mode === "days" ? "days" : "salary", transactions: Array.isArray(g.transactions) ? g.transactions : [] };
+      }) : []
+    };
+  }
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+
+  function balanceOf(g) {
+    var s = 0;
+    g.transactions.forEach(function (t) { s += t.type === "out" ? -t.amount : t.amount; });
+    return s;
+  }
+
+  function daysLeft(dateStr) {
+    if (!dateStr) return null;
+    var t = new Date(dateStr + "T00:00:00"), now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Math.round((t - now) / 86400000);
+  }
+
+  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  function paydaysLeft(dateStr) {
+    if (!dateStr) return null;
+    var sd = state.salaryDay, today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var target = new Date(dateStr + "T00:00:00");
+    if (target < today) return 0;
+    var count = 0, y = today.getFullYear(), m = today.getMonth();
+    for (var i = 0; i < 600; i++) {
+      var pd = new Date(y, m, Math.min(sd, daysInMonth(y, m)));
+      if (pd > target) break;
+      if (pd > today) count++;
+      m++; if (m > 11) { m = 0; y++; }
+    }
+    return count;
+  }
+
+  function fmtDate(s) { var p = s.split("-"); return parseInt(p[1], 10) + "月" + parseInt(p[2], 10) + "日"; }
+
+  function fmtDateFull(s) {
+    var p = s.split("-"), d = new Date(s + "T00:00:00");
+    var wd = ["日","月","火","水","木","金","土"][d.getDay()];
+    return parseInt(p[1], 10) + "/" + parseInt(p[2], 10) + "(" + wd + ")";
+  }
+
+  function fmtMonth(ym) {
+    var p = ym.split("-");
+    return parseInt(p[0], 10) + "年" + parseInt(p[1], 10) + "月";
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
+  }
+
+  function findGoal(id) { return state.goals.find(function (g) { return g.id === id; }); }
+
+  // ---- Home ----
+  function renderHome() {
+    var box = document.getElementById("homeContent");
+    var sub = document.getElementById("navSub");
+    var total = 0;
+    state.goals.forEach(function (g) { total += balanceOf(g); });
+    sub.textContent = state.goals.length ? "合計 " + yen(total) : "コツコツ貯金";
+
+    var html = "";
+    if (state.goals.length === 0) {
+      html = '<div class="empty-goal"><div class="empty-icon">🐷</div><p>まだ項目がありません。<br>貯金の目標を追加しましょう。</p>' +
+             '<button class="qbtn in" id="firstAdd" style="max-width:220px;margin:0 auto;">＋ 項目を追加</button></div>';
+    } else {
+      if (state.goals.length >= 2) html += summaryCardHTML(total);
+      state.goals.forEach(function (g) { html += goalBlockHTML(g); });
+      html += '<button class="add-goal" id="addGoal">＋ 項目を追加</button>';
+    }
+    box.innerHTML = html;
+
+    var fa = document.getElementById("firstAdd");
+    if (fa) fa.addEventListener("click", function () { openGoalSheet(null); });
+    var ag = document.getElementById("addGoal");
+    if (ag) ag.addEventListener("click", function () { openGoalSheet(null); });
+    state.goals.forEach(function (g) { bindGoalBlock(g.id); });
+
+    // Trigger progress bar animation after paint
+    requestAnimationFrame(function () {
+      box.querySelectorAll(".prog-fill[data-w]").forEach(function (el) {
+        el.style.width = el.getAttribute("data-w") + "%";
+      });
+    });
+  }
+
+  function summaryCardHTML(total) {
+    var totalTarget = 0;
+    state.goals.forEach(function (g) { if (g.target > 0) totalTarget += g.target; });
+    var h = '<div class="summary-card"><div class="sum-label">貯金総額</div><div class="sum-amount">' + yen(total) + '</div>';
+    if (totalTarget > 0) {
+      var pct = Math.min((total / totalTarget) * 100, 100);
+      h += '<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" data-w="' + pct.toFixed(1) + '" style="width:0%"></div></div>';
+      h += '<div class="prog-pct">' + Math.floor(pct) + '%</div></div>';
+      h += '<div class="sum-detail">' + state.goals.length + '個の目標・合計目標 ' + yen(totalTarget) + '</div>';
+    } else {
+      h += '<div class="sum-detail">' + state.goals.length + '個の目標</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function goalBlockHTML(g) {
+    var cur = balanceOf(g), target = g.target || 0, hasTarget = target > 0;
+    var h = '<div class="goal-block" data-gid="' + g.id + '">';
+    h += '<div class="goal-head"><div class="goal-name">' + escapeHtml(g.label || "貯金") + '</div>' +
+         '<button class="goal-edit" data-edit="' + g.id + '">⋯</button></div>';
+    h += '<div class="hero">';
+    if (hasTarget) {
+      var pct = (cur / target) * 100, pctShown = Math.max(0, Math.min(pct, 100));
+      h += '<div class="hero-target-lbl">目標 ' + yen(target) + '</div>';
+      h += '<div class="hero-amount">' + yen(cur) + '</div>';
+      h += '<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" data-w="' + pctShown.toFixed(1) + '" style="width:0%"></div></div>';
+      h += '<div class="prog-pct">' + Math.floor(pct) + '%</div></div>';
+      if (cur >= target) h += '<div class="hero-done">🎉 目標達成！</div>';
+    } else {
+      h += '<div class="bal-label">現在の貯金額</div><div class="hero-amount">' + yen(cur) + '</div>';
+    }
+    h += '</div>';
+    h += '<div class="quick"><button class="qbtn in" data-in="' + g.id + '"><span class="sym">＋</span>入金</button>' +
+         '<button class="qbtn out" data-out="' + g.id + '"><span class="sym">−</span>出金</button></div>';
+    if (hasTarget) {
+      var done = cur >= target, remain = target - cur;
+      h += '<div class="stats">';
+      h += statRow("#3478F6", "目標金額", yen(target), "");
+      h += statRow("#FF453A", "あと", done ? "達成済み" : yen(remain), done ? "muted" : "");
+      if (g.date) {
+        if (g.mode === "days") {
+          var dl = daysLeft(g.date), dt, dc = "";
+          if (dl > 0) dt = "あと" + dl + "日"; else if (dl === 0) dt = "今日まで"; else { dt = (-dl) + "日超過"; dc = "warn"; }
+          h += statRow("#BF5AF2", "目標日", fmtDate(g.date) + "（" + dt + "）", dc);
+          if (!done && dl > 0) h += statRow("#30D158", "1日あたり必要額", yen(remain / dl), "");
+        } else {
+          var pc = paydaysLeft(g.date), pt, pcc = "";
+          if (pc > 0) pt = "あと" + pc + "回"; else { pt = "残り0回"; pcc = "warn"; }
+          h += statRow("#BF5AF2", "目標日", fmtDate(g.date) + "（" + pt + "）", pcc);
+          if (!done && pc > 0) h += statRow("#30D158", "1回あたり必要額", yen(remain / pc), "");
+        }
+      } else {
+        h += statRow("#BF5AF2", "目標日", "未設定", "muted");
+      }
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function statRow(color, key, val, cls) {
+    return '<div class="stat-row"><div class="stat-key"><span class="dot" style="background:' + color + '"></span>' + key + '</div>' +
+           '<div class="stat-val ' + (cls || "") + '">' + val + '</div></div>';
+  }
+
+  function bindGoalBlock(gid) {
+    var inBtn = document.querySelector('[data-in="' + gid + '"]');
+    var outBtn = document.querySelector('[data-out="' + gid + '"]');
+    var ed = document.querySelector('[data-edit="' + gid + '"]');
+    if (inBtn) inBtn.addEventListener("click", function () { openEntry("in", gid, null); });
+    if (outBtn) outBtn.addEventListener("click", function () { openEntry("out", gid, null); });
+    if (ed) ed.addEventListener("click", function () { openGoalSheet(findGoal(gid)); });
+  }
+
+  // ---- History ----
+  var histFilter = "";
+  document.getElementById("histSearch").addEventListener("input", function () {
+    histFilter = this.value.toLowerCase();
+    renderHist();
+  });
+
+  function renderHist() {
+    var box = document.getElementById("histContent");
+    var allTx = [];
+    state.goals.forEach(function (g) {
+      g.transactions.forEach(function (t) { allTx.push({ t: t, g: g }); });
+    });
+
+    if (allTx.length === 0) {
+      box.innerHTML = '<div class="hist-empty">まだ記録がありません。<br>ホームから入金・出金を追加しましょう。</div>';
+      return;
+    }
+
+    if (histFilter) {
+      allTx = allTx.filter(function (item) {
+        return (item.t.memo || "").toLowerCase().indexOf(histFilter) >= 0 ||
+               (item.g.label || "").toLowerCase().indexOf(histFilter) >= 0;
+      });
+    }
+
+    if (histFilter && allTx.length === 0) {
+      box.innerHTML = '<div class="hist-empty">「' + escapeHtml(histFilter) + '」に一致する記録がありません。</div>';
+      return;
+    }
+
+    allTx.sort(function (a, b) {
+      if (a.t.date !== b.t.date) return a.t.date < b.t.date ? 1 : -1;
+      return b.t.id - a.t.id;
+    });
+
+    var months = {}, monthOrder = [];
+    allTx.forEach(function (item) {
+      var ym = item.t.date.substring(0, 7);
+      if (!months[ym]) { months[ym] = []; monthOrder.push(ym); }
+      months[ym].push(item);
+    });
+
+    var html = "";
+    monthOrder.forEach(function (ym) {
+      var items = months[ym], netIn = 0, netOut = 0;
+      items.forEach(function (item) {
+        if (item.t.type === "in") netIn += item.t.amount; else netOut += item.t.amount;
+      });
+      var net = netIn - netOut;
+      var netCls = net >= 0 ? "plus" : "minus";
+      var netStr = net >= 0 ? ("+" + yen(net)) : ("−" + yen(Math.abs(net)));
+      html += '<div class="hist-month-label"><span>' + fmtMonth(ym) + '</span><span class="month-net ' + netCls + '">' + netStr + '</span></div>';
+      html += '<div class="hist-list">';
+      items.forEach(function (item) {
+        var t = item.t, g = item.g;
+        var cls = t.type === "out" ? "out" : "in", sym = t.type === "out" ? "−" : "＋";
+        var memo = t.memo && t.memo.length ? t.memo : (t.type === "out" ? "出金" : "入金");
+        html += '<div class="hist-item" data-gid="' + g.id + '" data-tid="' + t.id + '">' +
+          '<div class="hist-icon ' + cls + '">' + sym + '</div>' +
+          '<div class="hist-main"><div class="hist-memo">' + escapeHtml(memo) + '</div>' +
+          '<div class="hist-meta">' + fmtDateFull(t.date) + '<span class="hist-tag">' + escapeHtml(g.label || "貯金") + '</span></div></div>' +
+          '<div class="hist-amt ' + cls + '">' + sym + yen(t.amount) + '</div></div>';
+      });
+      html += '</div>';
+    });
+
+    box.innerHTML = html;
+    box.querySelectorAll(".hist-item").forEach(function (el) {
+      el.addEventListener("click", function () {
+        openAction(parseInt(el.getAttribute("data-gid"), 10), parseInt(el.getAttribute("data-tid"), 10));
+      });
+    });
+  }
+
+  // ---- Settings ----
+  function renderSettings() { document.getElementById("setSalaryDay").value = state.salaryDay || 25; }
+
+  document.getElementById("setSalaryDay").addEventListener("input", function () {
+    var v = parseInt(this.value.replace(/[^0-9]/g, ""), 10);
+    if (isNaN(v)) v = 25; if (v < 1) v = 1; if (v > 31) v = 31;
+    this.value = v; state.salaryDay = v; save();
+  });
+
+  document.getElementById("btnReset").addEventListener("click", function () {
+    if (confirm("すべての項目と記録を削除します。よろしいですか？")) {
+      state = { salaryDay: 25, goals: [] }; save(); renderAll(); switchPage("home");
+    }
+  });
+
+  document.getElementById("btnExport").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "piggy_backup_" + todayStr() + ".json";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  });
+
+  // ---- Page switch ----
+  function switchPage(name) {
+    document.querySelectorAll(".page").forEach(function (p) { p.classList.remove("active"); });
+    document.getElementById("page-" + name).classList.add("active");
+    document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t.getAttribute("data-page") === name); });
+    window.scrollTo(0, 0);
+    if (name === "home") renderHome();
+    else if (name === "hist") renderHist();
+    else renderSettings();
+  }
+
+  document.querySelectorAll(".tab").forEach(function (t) {
+    t.addEventListener("click", function () { switchPage(t.getAttribute("data-page")); });
+  });
+
+  // ---- Entry ----
+  var entryType = "in", entryValue = "", entryGoalId = null, editingTid = null;
+
+  function openEntry(type, gid, existing) {
+    entryType = type; entryGoalId = gid; editingTid = existing ? existing.id : null;
+    entryValue = existing ? String(existing.amount) : "";
+    var titleMap = { in: "入金", out: "出金", adj: "残高を修正" };
+    document.getElementById("entryTitle").textContent = (existing ? "編集 - " : "") + titleMap[type];
+    var sv = document.getElementById("entrySave");
+    sv.className = "sheet-save " + (type === "out" ? "out" : type === "adj" ? "neutral" : "in");
+    document.getElementById("entryMemo").value = existing ? (existing.memo || "") : "";
+    document.getElementById("entryDate").value = existing ? existing.date : todayStr();
+    if (type === "adj") {
+      document.getElementById("entryCap").textContent = "修正後の残高を入力";
+      if (!existing) { var g = findGoal(gid); entryValue = String(Math.max(0, g ? balanceOf(g) : 0)); }
+    } else {
+      document.getElementById("entryCap").textContent = "金額を入力";
+    }
+    updateEntryDisplay();
+    showModal("entrySheet");
+  }
+
+  function updateEntryDisplay() {
+    var disp = document.getElementById("entryAmt"), sv = document.getElementById("entrySave");
+    if (entryValue === "" || entryValue === "0") {
+      disp.textContent = "¥0";
+      if (entryType === "adj") { disp.classList.remove("placeholder"); sv.disabled = false; }
+      else { disp.classList.add("placeholder"); sv.disabled = true; }
+    } else {
+      disp.textContent = yen(parseInt(entryValue, 10)); disp.classList.remove("placeholder"); sv.disabled = false;
+    }
+  }
+
+  (function buildKeypad() {
+    var pad = document.getElementById("keypad");
+    ["1","2","3","4","5","6","7","8","9","00","0","⌫"].forEach(function (k) {
+      var b = document.createElement("button");
+      b.className = "key" + (k === "⌫" ? " del" : ""); b.textContent = k;
+      b.addEventListener("click", function () { pressKey(k); });
+      pad.appendChild(b);
+    });
+  })();
+
+  function pressKey(k) {
+    if (k === "⌫") entryValue = entryValue.slice(0, -1);
+    else { var n = (entryValue + k).replace(/^0+(?=\d)/, ""); if (n.length <= 12) entryValue = n; }
+    updateEntryDisplay();
+  }
+
+  document.getElementById("entrySave").addEventListener("click", function () {
+    var g = findGoal(entryGoalId); if (!g) { closeModal(); return; }
+    var amt = parseInt(entryValue || "0", 10);
+    var date = document.getElementById("entryDate").value || todayStr();
+    var memo = document.getElementById("entryMemo").value.trim();
+    if (entryType === "adj") {
+      var diff = amt - balanceOf(g);
+      if (diff !== 0) g.transactions.push({ id: Date.now(), type: diff >= 0 ? "in" : "out", amount: Math.abs(diff), date: date, memo: memo || "残高修正" });
+    } else {
+      if (amt <= 0) return;
+      if (editingTid !== null) {
+        var tx = g.transactions.find(function (t) { return t.id === editingTid; });
+        if (tx) { tx.amount = amt; tx.date = date; tx.memo = memo; tx.type = entryType; }
+      } else {
+        g.transactions.push({ id: Date.now(), type: entryType, amount: amt, date: date, memo: memo });
+      }
+    }
+    var wasIn = (entryType === "in");
+    save(); closeModal(); renderAll();
+    if (wasIn) dropCoins();
+  });
+
+  // ---- Goal sheet ----
+  var goalEditId = null, goalMode = "salary";
+
+  function openGoalSheet(g) {
+    goalEditId = g ? g.id : null; goalMode = g ? g.mode : "salary";
+    document.getElementById("goalTitle").textContent = g ? "項目を編集" : "項目を追加";
+    document.getElementById("goalName").value = g ? (g.label || "") : "";
+    document.getElementById("goalTarget").value = g && g.target ? g.target : "";
+    document.getElementById("goalDate").value = g ? (g.date || "") : "";
+    setSeg(goalMode);
+    document.getElementById("goalExtraRows").style.display = g ? "block" : "none";
+    document.getElementById("goalDeleteWrap").style.display = g ? "block" : "none";
+    validateGoal();
+    showModal("goalSheet");
+  }
+
+  function setSeg(mode) {
+    goalMode = mode;
+    document.querySelectorAll("#goalSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === mode);
+    });
+  }
+
+  document.querySelectorAll("#goalSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setSeg(b.getAttribute("data-mode")); });
+  });
+  document.getElementById("goalName").addEventListener("input", validateGoal);
+  document.getElementById("goalTarget").addEventListener("input", function () {
+    this.value = this.value.replace(/[^0-9]/g, ""); validateGoal();
+  });
+
+  function validateGoal() {
+    document.getElementById("goalSave").disabled = !document.getElementById("goalName").value.trim();
+  }
+
+  document.getElementById("goalSave").addEventListener("click", function () {
+    var name = document.getElementById("goalName").value.trim();
+    var target = parseInt(document.getElementById("goalTarget").value.replace(/[^0-9]/g, "") || "0", 10);
+    var date = document.getElementById("goalDate").value || "";
+    if (!name) return;
+    if (goalEditId !== null) {
+      var g = findGoal(goalEditId);
+      if (g) { g.label = name; g.target = target; g.date = date; g.mode = goalMode; }
+    } else {
+      state.goals.push({ id: Date.now(), label: name, target: target, date: date, mode: goalMode, transactions: [] });
+    }
+    save(); closeModal(); renderAll(); switchPage("home");
+  });
+
+  document.getElementById("goalAdjust").addEventListener("click", function () {
+    var gid = goalEditId; closeModal();
+    setTimeout(function () { openEntry("adj", gid, null); }, 220);
+  });
+
+  document.getElementById("goalDelete").addEventListener("click", function () {
+    var g = findGoal(goalEditId);
+    if (g && confirm("「" + (g.label || "この項目") + "」を削除します。記録もすべて消えます。よろしいですか？")) {
+      state.goals = state.goals.filter(function (x) { return x.id !== goalEditId; });
+      save(); closeModal(); renderAll();
+    }
+  });
+
+  // ---- Action sheet ----
+  var actGid = null, actTid = null;
+
+  function openAction(gid, tid) {
+    actGid = gid; actTid = tid;
+    var g = findGoal(gid); if (!g) return;
+    var t = g.transactions.find(function (x) { return x.id === tid; }); if (!t) return;
+    document.getElementById("actionTitle").textContent =
+      (g.label || "貯金") + " · " + (t.type === "out" ? "出金" : "入金") + " " + yen(t.amount) + (t.memo ? " · " + t.memo : "");
+    showModal("actionSheet");
+  }
+
+  document.getElementById("actionEdit").addEventListener("click", function () {
+    var g = findGoal(actGid); if (!g) return;
+    var t = g.transactions.find(function (x) { return x.id === actTid; });
+    closeModal();
+    setTimeout(function () { if (t) openEntry(t.type === "out" ? "out" : "in", actGid, t); }, 220);
+  });
+
+  document.getElementById("actionDelete").addEventListener("click", function () {
+    var g = findGoal(actGid);
+    if (g) g.transactions = g.transactions.filter(function (x) { return x.id !== actTid; });
+    save(); closeModal(); renderAll();
+  });
+
+  document.getElementById("actionCancel").addEventListener("click", closeModal);
+
+  // ---- Coins ----
+  function dropCoins() {
+    var rain = document.getElementById("rain"); if (!rain) return;
+    var w = window.innerWidth, h = window.innerHeight;
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+    for (var i = 0; i < 22; i++) {
+      var coin = document.createElement("div");
+      coin.className = "coin"; coin.textContent = "¥";
+      var size = rnd(26, 44);
+      coin.style.cssText = "left:" + rnd(-10, w - 30) + "px;width:" + size + "px;height:" + size + "px;font-size:" + (size * 0.46) + "px;animation-duration:" + rnd(1.5, 2.6) + "s;animation-delay:" + rnd(0, 0.5) + "s;";
+      coin.style.setProperty("--dx", rnd(-60, 60) + "px");
+      coin.style.setProperty("--dist", (h + 120) + "px");
+      coin.style.setProperty("--spin", (Math.random() < 0.5 ? -1 : 1) * rnd(360, 1000) + "deg");
+      coin.addEventListener("animationend", function () { if (this.parentNode) this.parentNode.removeChild(this); });
+      rain.appendChild(coin);
+    }
+  }
+
+  // ---- Modal ----
+  function showModal(id) {
+    document.getElementById("modalBack").classList.add("show");
+    document.getElementById(id).classList.add("show");
+  }
+
+  function closeModal() {
+    document.getElementById("modalBack").classList.remove("show");
+    ["entrySheet","goalSheet","actionSheet"].forEach(function (id) { document.getElementById(id).classList.remove("show"); });
+  }
+
+  document.getElementById("modalBack").addEventListener("click", closeModal);
+  document.getElementById("entryClose").addEventListener("click", closeModal);
+  document.getElementById("goalClose").addEventListener("click", closeModal);
+
+  function renderAll() { renderHome(); renderHist(); renderSettings(); }
+  renderAll();
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
