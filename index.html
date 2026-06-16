@@ -17,7 +17,6 @@
   --blue: #3478F6;
   --red: #FF453A;
   --purple: #BF5AF2;
-  --green: #30D158;
   --bg: #F2F2F7;
   --card: #FFFFFF;
   --text: #1C1C1E;
@@ -72,21 +71,25 @@ body { padding-bottom: calc(64px + var(--safe-bottom)); }
 .goal-edit { border: none; background: var(--btn-bg); color: var(--text2); width: 30px; height: 30px; border-radius: 50%; font-size: 17px; cursor: pointer; line-height: 1; }
 .goal-edit:active { opacity: 0.7; }
 
-.hero { background: var(--card); border-radius: 22px; padding: 22px 20px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.hero-amount { font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
-.hero-target-lbl { font-size: 13px; color: var(--text2); font-weight: 600; margin-top: 6px; }
-.prog-wrap { display: flex; align-items: center; gap: 10px; margin: 18px 0 8px; }
-.prog-bar { flex: 1; height: 10px; background: var(--sep); border-radius: 100px; overflow: hidden; }
-.prog-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--blue) 0%, var(--purple) 100%); width: 0%; transition: width 0.7s cubic-bezier(0.34,1.2,0.64,1); }
-.prog-pct { font-size: 17px; font-weight: 800; color: var(--blue); min-width: 48px; text-align: right; letter-spacing: -0.5px; }
-.hero-done { margin-top: 12px; font-size: 15px; font-weight: 700; color: var(--green); background: rgba(48,209,88,0.12); padding: 7px 16px; border-radius: 100px; display: inline-block; }
+.hero { background: var(--card); border-radius: 22px; padding: 22px 20px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center; }
+.hero.balance-only { padding: 44px 20px; }
 .bal-label { font-size: 14px; color: var(--text2); font-weight: 600; margin-bottom: 8px; }
+.bal-amt { font-size: 48px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.ring-wrap { position: relative; margin: 0 auto; }
+.ring-wrap svg { transform: rotate(-90deg); display: block; }
+.ring-track { stroke: var(--sep); }
+.ring-fill { stroke: var(--blue); transition: stroke-dashoffset 0.7s cubic-bezier(0.34,1.2,0.64,1); }
+.ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.ring-pct { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; color: var(--text); }
+.ring-pct span { font-size: 21px; font-weight: 700; }
+.ring-label { font-size: 13px; color: var(--text2); margin-top: 6px; font-weight: 600; letter-spacing: 0.3px; }
+.ring-current { font-size: 17px; font-weight: 700; margin-top: 4px; color: var(--text); }
+.hero-done { margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--blue); background: rgba(52,120,246,0.12); padding: 7px 16px; border-radius: 100px; display: inline-block; }
 
 /* Summary card */
-.summary-card { background: var(--card); border-radius: 22px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 20px; }
-.sum-label { font-size: 13px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
-.sum-amount { font-size: 38px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
-.sum-detail { font-size: 13px; color: var(--text2); font-weight: 600; margin-top: 8px; }
+.summary-card { background: var(--card); border-radius: 22px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+.sum-label { font-size: 13px; color: var(--text2); font-weight: 600; margin-bottom: 4px; align-self: flex-start; }
+.sum-detail { font-size: 13px; color: var(--text2); font-weight: 600; margin-top: 8px; text-align: center; }
 
 .quick { display: flex; gap: 12px; margin-top: 12px; }
 .qbtn { flex: 1; border: none; border-radius: 16px; padding: 15px 0; font-size: 16px; font-weight: 700; color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.08s, opacity 0.15s; }
@@ -445,25 +448,34 @@ body { padding-bottom: calc(64px + var(--safe-bottom)); }
     var ag = document.getElementById("addGoal");
     if (ag) ag.addEventListener("click", function () { openGoalSheet(null); });
     state.goals.forEach(function (g) { bindGoalBlock(g.id); });
+  }
 
-    // Trigger progress bar animation after paint
-    requestAnimationFrame(function () {
-      box.querySelectorAll(".prog-fill[data-w]").forEach(function (el) {
-        el.style.width = el.getAttribute("data-w") + "%";
-      });
-    });
+  // 達成率は100%を超えても実数を表示する（リングの塗りは満タンで止める）
+  function ringHTML(cur, target, size, stroke) {
+    size = size || 220; stroke = stroke || 19;
+    var pct = target > 0 ? (cur / target) * 100 : 0;
+    var pctShown = Math.max(0, Math.min(pct, 100));
+    var r = size / 2 - stroke / 2 - 1, c = size / 2;
+    var C = 2 * Math.PI * r, off = C * (1 - pctShown / 100);
+    return '<div class="ring-wrap" style="width:' + size + 'px;height:' + size + 'px;">' +
+      '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">' +
+      '<circle class="ring-track" cx="' + c + '" cy="' + c + '" r="' + r + '" fill="none" stroke-width="' + stroke + '"/>' +
+      '<circle class="ring-fill" cx="' + c + '" cy="' + c + '" r="' + r + '" fill="none" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + off + '"/>' +
+      '</svg><div class="ring-center">' +
+      '<div class="ring-pct">' + Math.floor(pct) + '<span>%</span></div>' +
+      '<div class="ring-label">達成率</div>' +
+      '<div class="ring-current">' + yen(cur) + '</div></div></div>';
   }
 
   function summaryCardHTML(total) {
     var totalTarget = 0;
     state.goals.forEach(function (g) { if (g.target > 0) totalTarget += g.target; });
-    var h = '<div class="summary-card"><div class="sum-label">貯金総額</div><div class="sum-amount">' + yen(total) + '</div>';
+    var h = '<div class="summary-card"><div class="sum-label">貯金総額</div>';
     if (totalTarget > 0) {
-      var pct = Math.min((total / totalTarget) * 100, 100);
-      h += '<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" data-w="' + pct.toFixed(1) + '" style="width:0%"></div></div>';
-      h += '<div class="prog-pct">' + Math.floor(pct) + '%</div></div>';
+      h += ringHTML(total, totalTarget, 180, 16);
       h += '<div class="sum-detail">' + state.goals.length + '個の目標・合計目標 ' + yen(totalTarget) + '</div>';
     } else {
+      h += '<div class="bal-amt">' + yen(total) + '</div>';
       h += '<div class="sum-detail">' + state.goals.length + '個の目標</div>';
     }
     h += '</div>';
@@ -475,16 +487,12 @@ body { padding-bottom: calc(64px + var(--safe-bottom)); }
     var h = '<div class="goal-block" data-gid="' + g.id + '">';
     h += '<div class="goal-head"><div class="goal-name">' + escapeHtml(g.label || "貯金") + '</div>' +
          '<button class="goal-edit" data-edit="' + g.id + '">⋯</button></div>';
-    h += '<div class="hero">';
+    h += '<div class="hero' + (hasTarget ? "" : " balance-only") + '">';
     if (hasTarget) {
-      var pct = (cur / target) * 100, pctShown = Math.max(0, Math.min(pct, 100));
-      h += '<div class="hero-target-lbl">目標 ' + yen(target) + '</div>';
-      h += '<div class="hero-amount">' + yen(cur) + '</div>';
-      h += '<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" data-w="' + pctShown.toFixed(1) + '" style="width:0%"></div></div>';
-      h += '<div class="prog-pct">' + Math.floor(pct) + '%</div></div>';
+      h += ringHTML(cur, target, 220, 19);
       if (cur >= target) h += '<div class="hero-done">🎉 目標達成！</div>';
     } else {
-      h += '<div class="bal-label">現在の貯金額</div><div class="hero-amount">' + yen(cur) + '</div>';
+      h += '<div class="bal-label">現在の貯金額</div><div class="bal-amt">' + yen(cur) + '</div>';
     }
     h += '</div>';
     h += '<div class="quick"><button class="qbtn in" data-in="' + g.id + '"><span class="sym">＋</span>入金</button>' +
@@ -499,12 +507,12 @@ body { padding-bottom: calc(64px + var(--safe-bottom)); }
           var dl = daysLeft(g.date), dt, dc = "";
           if (dl > 0) dt = "あと" + dl + "日"; else if (dl === 0) dt = "今日まで"; else { dt = (-dl) + "日超過"; dc = "warn"; }
           h += statRow("#BF5AF2", "目標日", fmtDate(g.date) + "（" + dt + "）", dc);
-          if (!done && dl > 0) h += statRow("#30D158", "1日あたり必要額", yen(remain / dl), "");
+          if (!done && dl > 0) h += statRow("#3478F6", "1日あたり必要額", yen(remain / dl), "");
         } else {
           var pc = paydaysLeft(g.date), pt, pcc = "";
           if (pc > 0) pt = "あと" + pc + "回"; else { pt = "残り0回"; pcc = "warn"; }
           h += statRow("#BF5AF2", "目標日", fmtDate(g.date) + "（" + pt + "）", pcc);
-          if (!done && pc > 0) h += statRow("#30D158", "1回あたり必要額", yen(remain / pc), "");
+          if (!done && pc > 0) h += statRow("#3478F6", "1回あたり必要額", yen(remain / pc), "");
         }
       } else {
         h += statRow("#BF5AF2", "目標日", "未設定", "muted");
