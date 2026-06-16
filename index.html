@@ -474,11 +474,10 @@ body { padding-bottom: calc(64px + var(--safe-bottom)); }
     var totalTarget = 0;
     state.goals.forEach(function (g) { if (g.target > 0) totalTarget += g.target; });
     var h = '<div class="summary-card"><div class="sum-label">貯金総額</div>';
+    h += '<div class="bal-amt">' + yen(total) + '</div>';
     if (totalTarget > 0) {
-      h += ringHTML(total, totalTarget, 180, 16);
       h += '<div class="sum-detail">' + state.goals.length + '個の目標・合計目標 ' + yen(totalTarget) + '</div>';
     } else {
-      h += '<div class="bal-amt">' + yen(total) + '</div>';
       h += '<div class="sum-detail">' + state.goals.length + '個の目標</div>';
     }
     h += '</div>';
