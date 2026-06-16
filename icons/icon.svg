@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="332" y1="270" x2="692" y2="830">
-      <stop offset="0" stop-color="#6EE89A"/>
-      <stop offset="1" stop-color="#15A24A"/>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFA6C0"/>
+      <stop offset="1" stop-color="#FF4D7A"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="224" fill="#FFFFFF"/>
-
-  <circle cx="512" cy="650" r="180" fill="url(#g)"/>
-  <text x="512" y="710" text-anchor="middle" font-size="170" font-weight="700" font-family="-apple-system, system-ui, sans-serif" fill="#FFFFFF">¥</text>
-  <path d="M512 470 v-100" stroke="url(#g)" stroke-width="22" stroke-linecap="round"/>
-  <path d="M512 410 c-10 -70 -100 -90 -140 -60 c10 80 90 100 140 60 Z" fill="url(#g)"/>
-  <path d="M512 390 c10 -70 100 -90 140 -60 c-10 80 -90 100 -140 60 Z" fill="url(#g)"/>
+  <rect width="1024" height="1024" rx="224" fill="#FFF7EF"/>
+  <g fill="url(#g)">
+    <circle cx="512" cy="540" r="250"/>
+    <path d="M320 400 q-30 -90 70 -100 q-10 70 -30 110 Z"/>
+    <path d="M704 400 q30 -90 -70 -100 q10 70 30 110 Z"/>
+  </g>
+  <ellipse cx="512" cy="610" rx="140" ry="100" fill="#FFF7EF"/>
+  <ellipse cx="468" cy="610" rx="16" ry="22" fill="url(#g)"/>
+  <ellipse cx="556" cy="610" rx="16" ry="22" fill="url(#g)"/>
+  <circle cx="430" cy="490" r="22" fill="#FFF7EF"/>
+  <circle cx="594" cy="490" r="22" fill="#FFF7EF"/>
 </svg>
