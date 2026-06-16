@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="clip"><rect width="1024" height="1024" rx="224"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+    <rect width="1024" height="1024" fill="#3478F6"/>
+    <polygon points="1024,0 1024,1024 200,1024" fill="#FF6188"/>
+  </g>
+
+  <g>
+    <rect x="320" y="560" width="384" height="220" rx="22" fill="#FFFFFF" transform="rotate(-8 512 670)"/>
+    <rect x="320" y="540" width="384" height="220" rx="22" fill="#F1F5FF" transform="rotate(4 512 650)"/>
+    <rect x="320" y="520" width="384" height="220" rx="22" fill="#FFFFFF"/>
+    <circle cx="512" cy="630" r="60" fill="none" stroke="#3478F6" stroke-width="10"/>
+    <text x="512" y="652" text-anchor="middle" font-size="70" font-weight="700" font-family="-apple-system, system-ui, sans-serif" fill="#3478F6">¥</text>
+  </g>
+</svg>
